@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eight months, for you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,300;1,9..144,500&family=Hind+Madurai:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#1a0f2e; --deep:#2a1646; --moon:#f6d58e; --rose:#ff8fab; --mist:#e9dcf5;
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(ellipse at 50% 0%,var(--deep),var(--night) 70%) fixed;
+  color:var(--mist);font-family:"Hind Madurai",system-ui,sans-serif;line-height:1.7;
+  overflow-x:hidden;
+}
+h1,h2,.serif{font-family:Fraunces,Georgia,serif;font-weight:300;font-style:italic}
+canvas#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+main{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 20px}
+section{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:60px 0}
+h1{font-size:clamp(2.6rem,9vw,5rem);line-height:1.1;color:var(--moon)}
+.tamil{margin-top:14px;color:var(--rose);font-size:1.25rem}
+.sub{margin-top:22px;max-width:30ch;font-size:1.1rem;opacity:.9}
+button{font:inherit;cursor:pointer}
+.btn{margin-top:36px;padding:14px 32px;border-radius:999px;border:1px solid var(--moon);background:transparent;color:var(--moon);font-size:1.05rem;transition:background .25s,color .25s}
+.btn:hover,.btn:focus-visible{background:var(--moon);color:var(--night)}
+:focus-visible{outline:2px solid var(--rose);outline-offset:4px}
+.count{margin-top:40px;font-family:Fraunces,serif;font-size:1.1rem;color:var(--moon)}
+.count b{font-size:2.2rem;font-weight:500}
+
+/* stars */
+.stars{position:relative;width:100%;height:340px;margin-top:30px}
+.star{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;border:0;border-radius:50%;background:transparent;color:#8d7bb0;font-size:28px;line-height:46px;transition:color .4s,transform .3s,text-shadow .4s}
+.star:hover{transform:scale(1.2)}
+.star.on{color:var(--moon);text-shadow:0 0 18px var(--moon),0 0 40px var(--rose)}
+.star.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.25);color:var(--mist)}}
+.card{min-height:150px;max-width:34ch;margin-top:10px}
+.card h2{font-size:1.6rem;color:var(--moon);margin-bottom:6px}
+.progress{margin-top:6px;font-size:.95rem;opacity:.75}
+
+/* letter */
+#letter{display:none}
+#letter.show{display:flex}
+.paper{background:rgba(255,255,255,.06);border:1px solid rgba(246,213,142,.35);border-radius:18px;padding:34px 28px;text-align:left;max-width:56ch}
+.paper p{margin-bottom:1em;font-size:1.08rem}
+.paper .sign{margin-top:1.4em;color:var(--moon);font-size:1.3rem}
+.ask{margin-top:42px;font-size:clamp(1.6rem,6vw,2.4rem);color:var(--rose)}
+.row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:8px;min-height:90px;align-items:center}
+.yes{border-color:var(--rose);color:var(--rose)}
+.yes:hover,.yes:focus-visible{background:var(--rose);color:var(--night)}
+.heart{position:fixed;bottom:-30px;z-index:5;pointer-events:none;animation:rise 3.2s ease-out forwards}
+@keyframes rise{to{transform:translateY(-110vh) rotate(25deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.star.pulse,.heart{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<main>
+
+<section id="intro">
+  <h1 id="title">Eight months<br>with you</h1>
+  <p class="tamil">உன்னை காதலிக்கிறேன்</p>
+  <p class="sub">I made something small for today. It’s only for you, <span id="her"></span>.</p>
+  <div class="count"><b id="days">0</b> days of loving you</div>
+  <button class="btn" id="open">Open it</button>
+</section>
+
+<section id="sky-sec">
+  <h2 class="serif" style="font-size:1.8rem;color:var(--moon)">One star for every month</h2>
+  <p class="sub">Tap each star, in any order.</p>
+  <div class="stars" id="stars"></div>
+  <div class="card" id="card" aria-live="polite"></div>
+  <p class="progress" id="progress">0 of 8 lit</p>
+</section>
+
+<section id="letter">
+  <div class="paper">
+    <p id="l1"></p>
+    <p id="l2"></p>
+    <p id="l3"></p>
+    <p class="sign" id="sign"></p>
+  </div>
+  <h2 class="ask">Will you stay with me for many more months?</h2>
+  <div class="row" id="row">
+    <button class="btn yes" id="yes">Yes, always</button>
+    <button class="btn" id="no">Let me think…</button>
+  </div>
+  <p class="sub" id="reply" style="margin-top:10px;font-size:1.3rem;color:var(--moon)"></p>
+</section>
+
+</main>
+
+<script>
+/* ===== EDIT THIS PART ===== */
+const CONFIG = {
+  her: "My love",                 // her name or pet name
+  me: "Suhail",                   // your name
+  startDate: "2026-03-12",        // the day your love began (YYYY-MM-DD)
+  months: [
+    ["Month 1", "The day I met you, my whole world quietly changed."],
+    ["Month 2", "I started smiling at my phone like a fool. You did that."],
+    ["Month 3", "I learned that home can be a person, not a place."],
+    ["Month 4", "Even our small fights taught me how much I want you."],
+    ["Month 5", "You believed in me on the days I didn’t."],
+    ["Month 6", "Half a year, and I still get happy when your name appears."],
+    ["Month 7", "I can’t picture my future without you in it."],
+    ["Month 8", "Eight months in, and I’d choose you again today."]
+  ],
+  letter: [
+    "Eight months ago I didn’t know how much one person could change an ordinary life. Then you came, and everything I do now has a little of you in it.",
+    "Thank you for your patience, your laugh, and for loving me as I am. I’m not perfect, but my love for you is real, and it grows every day.",
+    "I wrote this page in my own code because words alone felt too small. Every line of it is how I feel about you."
+  ]
+};
+/* ========================== */
+
+const $ = id => document.getElementById(id);
+$("her").textContent = CONFIG.her;
+$("l1").textContent = CONFIG.letter[0];
+$("l2").textContent = CONFIG.letter[1];
+$("l3").textContent = CONFIG.letter[2];
+$("sign").textContent = "Forever yours, " + CONFIG.me;
+
+// days together
+const days = Math.max(0, Math.floor((Date.now() - new Date(CONFIG.startDate)) / 864e5));
+$("days").textContent = days;
+
+// smooth scroll
+$("open").onclick = () => $("sky-sec").scrollIntoView({behavior:"smooth"});
+
+// stars placed along a gentle wave
+const stars = $("stars");
+let lit = 0;
+CONFIG.months.forEach((m, i) => {
+  const b = document.createElement("button");
+  b.className = "star" + (i === 0 ? " pulse" : "");
+  b.textContent = "★";
+  b.setAttribute("aria-label", m[0]);
+  b.style.left = (8 + i * (84 / 7)) + "%";
+  b.style.top = (50 + Math.sin(i * 0.9) * 32) + "%";
+  b.onclick = () => {
+    $("card").innerHTML = "<h2></h2><p></p>";
+    $("card").querySelector("h2").textContent = m[0];
+    $("card").querySelector("p").textContent = m[1];
+    b.classList.remove("pulse");
+    if (!b.classList.contains("on")) {
+      b.classList.add("on"); lit++;
+      $("progress").textContent = lit + " of 8 lit";
+      hearts(4);
+      if (lit === 8) setTimeout(revealLetter, 1400);
+    }
+  };
+  stars.appendChild(b);
+});
+
+function revealLetter() {
+  $("letter").classList.add("show");
+  $("letter").scrollIntoView({behavior:"smooth"});
+  hearts(20);
+}
+
+// floating hearts
+function hearts(n) {
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement("span");
+    h.className = "heart";
+    h.textContent = ["❤","💖","💗","✨"][Math.floor(Math.random()*4)];
+    h.style.left = Math.random()*95 + "vw";
+    h.style.fontSize = (18 + Math.random()*26) + "px";
+    h.style.animationDelay = (Math.random()*0.8) + "s";
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 4200);
+  }
+}
+
+// the playful "no"
+const no = $("no");
+const dodge = () => {
+  const x = (Math.random() - .5) * 160, y = (Math.random() - .5) * 60;
+  no.style.transform = `translate(${x}px,${y}px)`;
+};
+no.addEventListener("mouseenter", dodge);
+no.addEventListener("touchstart", e => { e.preventDefault(); dodge(); });
+no.onclick = dodge;
+
+$("yes").onclick = () => {
+  $("row").style.display = "none";
+  $("reply").innerHTML = "I love you, " + CONFIG.her + ". Happy 8 months. ❤";
+  hearts(60);
+};
+
+// twinkling starfield
+const c = $("sky"), ctx = c.getContext("2d");
+let W, H, dots = [];
+function size() {
+  W = c.width = innerWidth; H = c.height = innerHeight;
+  dots = Array.from({length: Math.floor(W*H/9000)}, () => ({
+    x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.4+.3, p: Math.random()*6.28
+  }));
+}
+addEventListener("resize", size); size();
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+(function draw(t = 0) {
+  ctx.clearRect(0, 0, W, H);
+  for (const d of dots) {
+    ctx.globalAlpha = .4 + .6 * Math.abs(Math.sin(d.p + (still ? 0 : t/1400)));
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 6.28); ctx.fill();
+  }
+  if (!still) requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
